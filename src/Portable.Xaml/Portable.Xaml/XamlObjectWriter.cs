@@ -492,7 +492,7 @@ namespace Portable.Xaml
 						if (state.Type.IsUsableDuringInitialization)
 						{
 							// Make sure that we invoke this block only once, while setting the very first property.
-							if (state.WrittenProperties.Count == 1)
+							if (state.WrittenProperties.Count == 1 && !(parent_state.Type.IsDictionary && state.KeyValue == null))
 							{
 								if (!AddToCollectionIfAppropriate(parent_state.Type, parent_state.CurrentMember, parent_state.Value, state.Value, state.KeyValue) && 
 								    !parent_state.CurrentMemberState.IsAlreadySet)
@@ -665,11 +665,20 @@ namespace Portable.Xaml
 				ms.Value = GetCorrectlyTypedValue (null, xm.Type, obj);
 			else if (ReferenceEquals(xm, XamlLanguage.Name) || xm == xt.GetAliasedProperty (XamlLanguage.Name))
 				ms.Value = GetCorrectlyTypedValue (xm, XamlLanguage.String, obj);
-			else if (ReferenceEquals(xm, XamlLanguage.Key) || xm == xt.GetAliasedProperty(XamlLanguage.Key)) {
-				var keyValue = GetCorrectlyTypedValue (null, xt.KeyType, obj);
+			else if (ReferenceEquals(xm, XamlLanguage.Key))
+			{
+				var keyValue = GetCorrectlyTypedValue(null, xt.KeyType, obj);
 				state.KeyValue = keyValue;
 				ms.Value = keyValue;
-			} else {
+			}
+			else if (xm == xt.GetAliasedProperty(XamlLanguage.Key))
+			{
+				var keyValue = GetCorrectlyTypedValue(xm, xm.Type, obj);
+				state.KeyValue = keyValue;
+				ms.Value = keyValue;			
+			} 
+			else 
+			{
 				if (!AddToCollectionIfAppropriate (xt, xm, parent, obj, keyObj)) {
 					if (!xm.IsReadOnly || xm.IsConstructorArgument)
 						ms.Value = GetCorrectlyTypedValue (xm, xm.Type, obj);

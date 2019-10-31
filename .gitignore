@@ -3,4 +3,5 @@ artifacts
 obj/
 packages/
 .vs/
+src/.idea/
 *.user

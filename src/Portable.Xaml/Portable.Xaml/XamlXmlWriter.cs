@@ -196,7 +196,13 @@ namespace Portable.Xaml
 				// do nothing
 				state.IsGetObject = false;
 			} else if (w.WriteState == WriteState.Attribute) {
-				w.WriteString ("}");
+				if (!(state != null
+				      && state.CurrentMember != null
+				      && state.Type.Name == "String" 
+				      && state.CurrentMember.PreferredXamlNamespace == XamlLanguage.Xaml2006Namespace))
+				{
+					w.WriteString ("}");
+				}
 				inside_attribute_object = false;
 			} else {
 				WritePendingNamespaces ();
@@ -204,13 +210,21 @@ namespace Portable.Xaml
 			}
 		}
 
-		protected override void OnWriteEndMember ()
+		protected override void OnWriteEndMember()
 		{
-			WritePendingValue (XamlNodeType.Value);
+			var member = CurrentMember;
+			var state = object_states.Peek();
+			
+			if (state.Type.GetAliasedProperty(XamlLanguage.Key) != null && member == XamlLanguage.Key)
+			{
+				hasPendingValue = false;
+				pendingValue = null;
+				return;
+			}
 
+			WritePendingValue (XamlNodeType.Value);
 			WritePendingStartMember (XamlNodeType.EndMember);
 
-			var member = CurrentMember;
 			if (ReferenceEquals(member, XamlLanguage.Initialization))
 				return;
 			if (ReferenceEquals(member, XamlLanguage.Items))
@@ -250,37 +264,49 @@ namespace Portable.Xaml
 			string ns = xamlType.PreferredXamlNamespace;
 			string prefix = GetPrefix (ns); // null prefix is not rejected...
 
-			if (w.WriteState == WriteState.Attribute) {
+			if (w.WriteState == WriteState.Attribute)
+			{
 				// MarkupExtension
-				w.WriteString ("{");
-				if (!String.IsNullOrEmpty (prefix)) {
-					w.WriteString (prefix);
-					w.WriteString (":");
-				}
-				string name = ns == XamlLanguage.Xaml2006Namespace ? xamlType.InternalXmlName : xamlType.Name;
-				w.WriteString (name);
-
-				attribute_index = -1;
-
-				// space between type and first member (if any).
-				if (xamlType.IsMarkupExtension && xamlType.GetSortedConstructorArguments ().GetEnumerator ().MoveNext ())
-					w.WriteString (" ");
-			} else {
-				WritePendingNamespaces ();
-				w.WriteStartElement (prefix, xamlType.InternalXmlName, xamlType.PreferredXamlNamespace);
-				var l = xamlType.TypeArguments;
-				if (l != null) {
-					w.WriteStartAttribute ("x", "TypeArguments", XamlLanguage.Xaml2006Namespace);
-					for (int i = 0; i < l.Count; i++) {
-						if (i > 0)
-							w.WriteString (", ");
-						w.WriteString (new XamlTypeName (l [i]).ToString (prefix_lookup));
+				if (!(ns == XamlLanguage.Xaml2006Namespace && xamlType.Name == "String"))
+				{
+					w.WriteString("{");
+					if (!String.IsNullOrEmpty(prefix))
+					{
+						w.WriteString(prefix);
+						w.WriteString(":");
 					}
-					w.WriteEndAttribute ();
+
+					string name = ns == XamlLanguage.Xaml2006Namespace ? xamlType.InternalXmlName : xamlType.Name;
+					w.WriteString(name);
+
+					attribute_index = -1;
+
+					// space between type and first member (if any).
+					if (xamlType.IsMarkupExtension &&
+					    xamlType.GetSortedConstructorArguments().GetEnumerator().MoveNext())
+						w.WriteString(" ");
+				}
+			}
+			else
+			{
+				WritePendingNamespaces();
+				w.WriteStartElement(prefix, xamlType.InternalXmlName, xamlType.PreferredXamlNamespace);
+				var l = xamlType.TypeArguments;
+				if (l != null)
+				{
+					w.WriteStartAttribute("x", "TypeArguments", XamlLanguage.Xaml2006Namespace);
+					for (int i = 0; i < l.Count; i++)
+					{
+						if (i > 0)
+							w.WriteString(", ");
+						w.WriteString(new XamlTypeName(l[i]).ToString(prefix_lookup));
+					}
+
+					w.WriteEndAttribute();
 				}
 			}
 
-			object_states.Push (tmp);
+			object_states.Push (tmp);				
 		}
 
 		protected override void OnWriteGetObject ()
@@ -317,7 +343,7 @@ namespace Portable.Xaml
 				OnWriteStartMemberElement (state.Type, CurrentMember);
 		}
 		
-		protected override void OnWriteStartMember (XamlMember member)
+		protected override void OnWriteStartMember(XamlMember member)
 		{
 			if (ReferenceEquals(member, XamlLanguage.Initialization))
 				return;
@@ -326,8 +352,15 @@ namespace Portable.Xaml
 			if (member == member.TargetType?.ContentProperty)
 				return;
 
-			WritePendingValue (XamlNodeType.Value);
 			var state = object_states.Peek ();
+			if (state.Type.GetAliasedProperty(XamlLanguage.Key) != null && member == XamlLanguage.Key)
+			{
+				hasPendingValue = true;
+				pendingValue = "";
+				return;
+			}
+			
+			WritePendingValue (XamlNodeType.Value);
 			
 			// Top-level positional parameters are somehow special.
 			// - If it has only one parameter, it is written as an
@@ -406,6 +439,7 @@ namespace Portable.Xaml
 				return AllowedMemberLocations.MemberElement; // as each item holds a key.
 
 			var xd = xm as XamlDirective;
+			
 			if (xd != null && (xd.AllowedLocation & AllowedMemberLocations.Attribute) == 0)
 				return AllowedMemberLocations.MemberElement;
 
@@ -418,6 +452,9 @@ namespace Portable.Xaml
 				return AllowedMemberLocations.None;
 
 			if (xm.IsContentValue (service_provider) || mt.IsContentValue (service_provider))
+				return AllowedMemberLocations.Attribute;
+			
+			if (ReferenceEquals(xd, XamlLanguage.Key))
 				return AllowedMemberLocations.Attribute;
 
 			return AllowedMemberLocations.Any;

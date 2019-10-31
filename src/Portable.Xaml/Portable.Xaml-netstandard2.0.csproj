@@ -4,6 +4,9 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>Portable.Xaml</RootNamespace>
     <AssemblyName>Portable.Xaml</AssemblyName>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageVersion>0.30.0-beta37</PackageVersion>
+    <PackageId>Portable.Xaml</PackageId>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
