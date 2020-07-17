@@ -89,7 +89,7 @@ namespace Portable.Xaml.Schema
 			if (instance == null)
 				throw new ArgumentNullException ("instance");
 			if (item == null)
-				throw new ArgumentNullException ("item");
+				return;
 
 			var collectionType = instance.GetType ();
 			var itemType = item.GetType();
