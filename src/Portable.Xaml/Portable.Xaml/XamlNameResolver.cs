@@ -210,6 +210,8 @@ namespace Portable.Xaml
 			Names = names.ToArray ();
 		}
 
+		private object _keyValue = null;
+
 		public XamlWriterInternalBase.ObjectState ParentState { get; set; }
 		public XamlWriterInternalBase.MemberAndValue ParentMemberState { get; set; }
 		public XamlWriterInternalBase.ObjectState State { get; set; }
@@ -217,7 +219,11 @@ namespace Portable.Xaml
 		public XamlType Type => State.Type;
 		public XamlMember Member => MemberState.Member;
 		public object Value => State.Value;
-		public object KeyValue => State.KeyValue;
+		public object KeyValue
+		{
+			get => _keyValue ?? State.KeyValue;
+			set => _keyValue = value;
+		} 
 
 		public int? ListIndex { get; set; }
 

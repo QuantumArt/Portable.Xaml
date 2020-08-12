@@ -420,6 +420,7 @@ namespace Portable.Xaml
 				// actually .NET seems to seek "parent" object in its own IXamlNameResolver implementation.
 				nfr.State = object_states.Peek();
 				nfr.MemberState = nfr.State.CurrentMemberState;
+				nfr.KeyValue = state.KeyValue;
 
 				if (nfr.Type.IsCollection && !nfr.Type.IsDictionary && nfr.Value is IList)
 				{
@@ -438,7 +439,7 @@ namespace Portable.Xaml
 					nfr.ParentMemberState = nfr.ParentState.CurrentMemberState;
 					object_states.Push(nfr.State);
 				}
-				pending_name_references.Add((NameFixupRequired)obj);
+				pending_name_references.Add(nfr);
 			}
 			else
 			{
