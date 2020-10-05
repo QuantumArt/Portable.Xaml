@@ -5,7 +5,7 @@
     <RootNamespace>Portable.Xaml</RootNamespace>
     <AssemblyName>Portable.Xaml</AssemblyName>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageVersion>0.30.0-beta39</PackageVersion>
+    <PackageVersion>0.30.0-beta40</PackageVersion>
     <PackageId>Portable.Xaml</PackageId>
   </PropertyGroup>
 

@@ -198,7 +198,7 @@ namespace Portable.Xaml
 			} else if (w.WriteState == WriteState.Attribute) {
 				if (!(state != null
 				      && state.CurrentMember != null
-				      && state.Type.Name == "String" 
+				      && (state.Type.Name == "String" || state.Type.Name == "TimeSpan") 
 				      && state.CurrentMember.PreferredXamlNamespace == XamlLanguage.Xaml2006Namespace))
 				{
 					w.WriteString ("}");
